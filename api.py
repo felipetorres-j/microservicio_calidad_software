@@ -31,34 +31,25 @@ POSTGRES_DB = os.getenv('POSTGRES_DB')
 api_config = {
     'title': 'Microservicio de ejemplo',
     'default': 'Cursos API',
-    'default_label': 'manage/query the user\'s favorites products',
-    'description': 'Microservice that manage/query the user\'s favorites products'
+    'default_label': 'ejemplo de microservicio con api cursos',
+    'description': 'id del curso con su nombre y profesor'
 }
 
 api = Api(application, **api_config)
 
 parser = reqparse.RequestParser()
 
-parser_collection = reqparse.RequestParser()
-parser_collection.add_argument('user_id', type=str, required=True, help='The id of the user')
 
 FAVORITE_BODY = api.model('Favorite', {
-    'id': fields.String(required=True, description='id of the user'),
-    'name': fields.String(required=True, description='id of the user'),
-    'profesor': fields.String(required=True, description='retail to product'),
+    'id': fields.String(required=True, description='id del curso'),
+    'name': fields.String(required=True, description='nombre del curso'),
+    'profesor': fields.String(required=True, description='nombre del profesor'),
 })
 
 DELETE_BODY = api.model('Delete favorite', {
-    'user_id': fields.String(required=True, description='id of the user'),
-    'kid': fields.String(description='the retail#sku/id', required=True),
-    'collection_id': fields.Integer(description='the collection of product created', required=True)
+    'id': fields.String(required=True, description='id del curso'),
 })
 
-COLLECTION_BODY = api.model('Collection', {
-    'user_id': fields.String(required=True, description='id of the user'),
-    'name': fields.String(description='name of collection', required=True),
-    'description': fields.String(description='collection description', required=True)
-})
 
 def get_response(status_bool, method):
     """ Evaluate status of method """
@@ -82,7 +73,7 @@ def get_conn():
                                password=POSTGRES_PASS)
     return connect
 
-def get_cursor(conn, country):
+def get_cursor(conn):
     """Connect to db and configure proper search_path"""
     cursor = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     return cursor
@@ -109,29 +100,27 @@ def insert_curso(args, country):
         logging.error(error)
         return False
 
-def delete_favorite(args, country):
-    """Delete favorite from favorites_db"""
+def delete_favorite(args):
+    """Delete favorite from cursos_db"""
     conn = get_conn()
-    cursor = get_cursor(conn, country)
+    cursor = get_cursor(conn)
     try:
         cursor.execute(
             '''
-            SELECT deleted_favorite(
-                '{kid}'::TEXT,
-                '{user_id}'::TEXT,
-                {collection_id}::INTEGER
+            SELECT deleted_curso(
+                '{id}'::TEXT
             )
             '''.format(**args)
         )
-        logging.info("1 row deleted from FAVORITES")
+        logging.info("1 row deleted from Curso")
         conn.commit()
         return True
     except Exception as error:
         logging.error(error)
         return False
 
-def get_favorites():
-    """Get favorites from db"""
+def get_cursos():
+    """Get cursos from db"""
     query = "SELECT * FROM select_cursos()"
     cursor = get_cursor(get_conn(), 'cl')
     try:
@@ -144,23 +133,9 @@ def get_favorites():
 
     return favorites, True
 
-def get_collection(user_id, country):
-    """Get collections from db"""
-    query = "SELECT * FROM select_collection('{}'::TEXT)".format(user_id)
-    cursor = get_cursor(get_conn(), country)
-    try:
-        cursor.execute(query)
-    except Exception as error:
-        logging.error(error)
-        return False
-
-    collections = cursor.fetchall()
-    return collections, True
-
-
-@api.route('/favorite/')
+@api.route('/curso/')
 class Favorite(Resource):
-    """ Class to insert and delete favorites """
+    """ Class to insert and delete cursos """
     @api.expect(FAVORITE_BODY)
     @api.doc(description='Add user\'s favorite')
 
@@ -177,30 +152,30 @@ class Favorite(Resource):
         return get_response(insert_curso(val, country), 'POST')
 
     @api.expect(DELETE_BODY)
-    @api.doc(description='Delete a user\'s favorite')
+    @api.doc(description='Delete curso')
     def delete(self):
-        """ Method delete favorite with kid, user_id and collection_id """
+        """ Method delete favorite with id"""
         country = get_country()
         val = {
             'id': api.payload.get('id'),
         }
 
-        return get_response(delete_favorite(val, country), 'DELETE')
+        return get_response(delete_curso(val, country), 'DELETE')
 
     @api.doc(description='Chrome does not allow to use DELETE verb if OPTIONS is not implemented')
     def options(self):
         return {}
 
 
-@api.route('/favorites/')
+@api.route('/cursos/')
 class FavoriteList(Resource):
-    """ Class to get favorite list"""
-    @api.doc(parser=parser, description='Get all user\'s favorites')
+    """ Class to get curso list"""
+    @api.doc(parser=parser, description='obtenemos todos los cursos cursos')
     def get(self):
-        """ Method get all favorites with user_id """
+        """ Method get all cursos with user_id """
         country = get_country()
         args = parser.parse_args()
-        list_favorites, status_bool = get_favorites()
+        list_favorites, status_bool = get_cursos()
         return list_favorites, get_response(status_bool, 'GET')
         #TODO: Add index for user_id on favorites collection (speed purposes)
 
