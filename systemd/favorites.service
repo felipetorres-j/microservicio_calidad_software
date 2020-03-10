@@ -1,0 +1,8 @@
+[Unit]
+Description=Favorites
+
+[Service]
+ExecStart=/usr/bin/bash -c 'cd /opt/knasta/microservices/favorites/ && uwsgi --ini uwsgi.ini'
+
+[Install]
+WantedBy=multi-user.target

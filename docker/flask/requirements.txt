@@ -1,0 +1,8 @@
+Werkzeug==0.16.1
+flask-restplus
+flask-cors
+uwsgi
+ipython
+pydash
+psycopg2
+pytz

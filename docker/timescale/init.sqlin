@@ -1,0 +1,45 @@
+CREATE TABLE curso(
+	id SERIAL,
+	name TEXT NOT NULL,
+	profesor TEXT NOT NULL,
+	created_at TIMESTAMPTZ NOT NULL,
+
+	PRIMARY KEY (id)
+);
+
+
+CREATE OR REPLACE FUNCTION insert_curso(_name TEXT, _profesor TEXT, _created_at TIMESTAMP WITH TIME ZONE) RETURNS VOID
+	LANGUAGE plpgsql
+	AS $$
+BEGIN
+	INSERT INTO curso(
+		name,
+		profesor,
+		created_at
+	)
+	values (
+		_name,
+		_profesor,
+		_created_at
+	);
+END;
+$$;
+
+
+CREATE OR REPLACE FUNCTION deleted_curso(_id INTEGER) RETURNS VOID
+    LANGUAGE plpgsql
+    AS $$
+BEGIN
+    DELETE FROM curso  WHERE id = _id;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION select_cursos(_id INTEGER)
+	RETURNS TABLE(name TEXT, profesor TEXT, created_at TEXT)
+	LANGUAGE plpgsql
+	AS $$
+BEGIN
+	RETURN QUERY SELECT c.name, c.profesor, c.created_at  FROM curso c  ORDER BY c.created_at DESC;
+END;
+$$;
+

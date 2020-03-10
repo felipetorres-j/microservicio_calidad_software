@@ -1,0 +1,29 @@
+version: '3'
+
+services:
+
+  curso:
+    container_name: curso
+    build: docker/flask
+    ports:
+      - "8006:8006"
+    volumes:
+      - ./:/opt/knasta/microservicio_chm
+    working_dir: /opt/knasta/microservicio_chm
+    environment:
+      POSTGRES_HOST: 'docker.for.mac.localhost'
+      POSTGRES_USER: 'postgres'
+      POSTGRES_PASS: 'anythingbuttangerines'
+      POSTGRES_DB: 'chm'
+    command: ["uwsgi", "--ini", "uwsgi.ini"]
+
+  curso_db:
+    image: timescale/timescaledb
+    container_name: curso_db
+    environment:
+      POSTGRES_DB: 'chm'
+      POSTGRES_PASSWORD: 'anythingbuttangerines'
+    ports:
+      - "5432:5432"
+    volumes:
+         - ./docker/timescale/init.sql:/docker-entrypoint-initdb.d/init.sql
